@@ -10,12 +10,12 @@ on:
         type: string
       go-build-args:
         description: "The arguments to pass to the go build command"
-        required: true
+        required: false
         default: "."
         type: string
       go-test-args:
         description: "The arguments to pass to the go test command"
-        required: true
+        required: false
         default: "-race -cover -v ./..."
         type: string
       go-bench-args:
