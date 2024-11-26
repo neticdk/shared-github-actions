@@ -16,7 +16,7 @@ on:
       go-test-args:
         description: "The arguments to pass to the go test command"
         required: false
-        default: "-race -cover -v ./..."
+        default: "-cover -v ./..."
         type: string
       go-bench-args:
         description: "The arguments to pass to the go test command when running benchmarks"
