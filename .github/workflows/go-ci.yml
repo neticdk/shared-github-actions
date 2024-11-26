@@ -1,0 +1,71 @@
+---
+name: Go CI
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: "The version of Go to use"
+        required: false
+        type: string
+      go-build-args:
+        description: "The arguments to pass to the go build command"
+        required: true
+        default: "."
+        type: string
+      go-test-args:
+        description: "The arguments to pass to the go test command"
+        required: true
+        default: "-race -cover -v ./..."
+        type: string
+      go-bench-args:
+        description: "The arguments to pass to the go test command when running benchmarks"
+        required: false
+        default: "-bench=./..."
+      run-benchmarks:
+        description: "Run benchmarks"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        if: inputs.go-version != ''
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: Set up Go
+        if: inputs.go-version == ''
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install dependencies
+        run: |
+          go mod download
+          go mod verify
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+      - name: Run tests
+        run: go test ${{ inputs.go-test-args }}
+
+      - name: Run benchmarks
+        if: inputs.run-benchmarks
+        run: go test ${{ inputs.go-bench-args }}
+
+      - name: Build
+        run: go build ${{ inputs.go-build-args }}
