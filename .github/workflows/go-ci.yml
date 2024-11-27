@@ -61,12 +61,12 @@ jobs:
         with:
           version: latest
 
+      - name: Build
+        run: go build ${{ inputs.go-build-args }}
+
       - name: Run tests
         run: go test ${{ inputs.go-test-args }}
 
       - name: Run benchmarks
         if: inputs.run-benchmarks
         run: go test ${{ inputs.go-bench-args }}
-
-      - name: Build
-        run: go build ${{ inputs.go-build-args }}
