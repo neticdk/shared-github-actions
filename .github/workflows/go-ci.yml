@@ -56,6 +56,9 @@ jobs:
           go mod download
           go mod verify
 
+      - name: Build
+        run: go build ${{ inputs.go-build-args }}
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
@@ -68,6 +71,3 @@ jobs:
       - name: Run benchmarks
         if: inputs.run-benchmarks
         run: go test ${{ inputs.go-bench-args }}
-
-      - name: Build
-        run: go build ${{ inputs.go-build-args }}
