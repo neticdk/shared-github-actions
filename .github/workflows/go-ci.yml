@@ -23,6 +23,10 @@ on:
         required: false
         default: "-bench=./..."
         type: string
+      go-private:
+        description: "The GOPRIVATE environment variable"
+        required: false
+        type: string
       run-benchmarks:
         description: "Run benchmarks"
         required: false
@@ -31,6 +35,9 @@ on:
 
 jobs:
   build:
+    env:
+      GOPRIVATE: "${{ inputs.go-private }}"
+
     runs-on: ubuntu-latest
 
     steps:
