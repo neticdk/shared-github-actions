@@ -4,9 +4,9 @@ name: Go CI
 on:
   workflow_call:
     secrets:
-      github_username:
+      gh_username:
         required: false
-      github_token:
+      gh_token:
         required: false
     inputs:
       go-version:
@@ -65,7 +65,7 @@ jobs:
 
       - name: Setup private repository access
         if: inputs.go-private != ''
-        run: git config --global url."https://${{ secrets.github_username }}:${{ secrets.github_token }}@github.com".insteadOf "https://github.com"
+        run: git config --global url."https://${{ secrets.gh_username }}:${{ secrets.gh_token }}@github.com".insteadOf "https://github.com"
 
       - name: Install dependencies
         run: |
