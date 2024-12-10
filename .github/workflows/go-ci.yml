@@ -62,9 +62,13 @@ jobs:
         run: |
           go mod download
           go mod verify
+        env:
+          GOPRIVATE: "${{ inputs.go-private }}"
 
       - name: Build
         run: go build ${{ inputs.go-build-args }}
+        env:
+          GOPRIVATE: "${{ inputs.go-private }}"
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
