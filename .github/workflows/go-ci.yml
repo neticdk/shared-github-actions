@@ -82,6 +82,9 @@ jobs:
           version: latest
           args: --timeout=5m --verbose
 
+      - name: Build
+        run: go build ${{ inputs.go-build-args }}
+
       - name: Run tests
         run: go test ${{ inputs.go-test-args }}
 
