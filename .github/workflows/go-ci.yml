@@ -35,7 +35,7 @@ on:
       run-benchmarks:
         description: "Run benchmarks"
         required: false
-        default: true
+        default: false
         type: boolean
 
 jobs:
