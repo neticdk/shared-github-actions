@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+---
+name: Go Continuous Delivery
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: "The version of Go to use"
+        required: false
+        type: string
+      go-private:
+        description: "The GOPRIVATE environment variable"
+        required: false
+        type: string
+
+jobs:
+  release:
+    env:
+      GOPRIVATE: "${{ inputs.go-private }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        if: inputs.go-version != ''
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: Setup Go
+        if: inputs.go-version == ''
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Setup private repository access
+        if: inputs.go-private != ''
+        run: git config --global url."https://${{ secrets.gh_username }}:${{ secrets.gh_token }}@github.com".insteadOf "https://github.com"
+
+      - name: Restore Go cache
+        if: inputs.cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run GoReleaser dry-run
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
