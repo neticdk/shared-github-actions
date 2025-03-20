@@ -23,16 +23,6 @@ on:
         required: false
         default: false
         type: boolean
-      cache:
-        description: "Use caching"
-        required: false
-        default: false
-        type: boolean
-      run-vuln-scan:
-        description: "Scan for vulnerabilities (using Trivy)"
-        required: false
-        default: true
-        type: boolean
       run-release-test:
         description: "Run release dry-run using GoReleaser"
         required: false
@@ -74,21 +64,15 @@ jobs:
             exit 1
           fi
 
-      - name: Restore Go cache
-        if: inputs.cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Install Go dependencies
         run: |
           go mod download
           go mod verify
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
 
       # go test will compile the code, so we don't need to run go build
       - name: Go Compile and Test
@@ -111,31 +95,11 @@ jobs:
       - name: Check GoReleaser config
         run: goreleaser check
 
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Run GoReleaser dry-run
+        if: inputs.run-release-test
+        run: goreleaser release --snapshot --skip=publish --clean
 
-      - name: Setup Go
-        if: inputs.go-version != ''
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ inputs.go-version }}
-
-      - name: Setup Go
-        if: inputs.go-version == ''
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-
-  image-vul-check:
-    if: inputs.run-vuln-scan
+  vuln-scan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -148,48 +112,3 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           vuln-type: "library"
-
-  release-test:
-    if: inputs.run-release-test
-    env:
-      GOPRIVATE: "${{ inputs.go-private }}"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Go
-        if: inputs.go-version != ''
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ inputs.go-version }}
-
-      - name: Setup Go
-        if: inputs.go-version == ''
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-
-      - name: Setup private repository access
-        if: inputs.go-private != ''
-        run: git config --global url."https://${{ secrets.gh_username }}:${{ secrets.gh_token }}@github.com".insteadOf "https://github.com"
-
-      - name: Restore Go cache
-        if: inputs.cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Run GoReleaser dry-run
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --snapshot --skip=publish --clean
