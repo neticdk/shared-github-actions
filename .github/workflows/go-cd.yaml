@@ -5,6 +5,9 @@ name: Go Continuous Delivery
 on:
   workflow_call:
     secrets:
+      # gh_username and gh_password are needed if `go get` (driven by
+      # `GOPRIVATE`) needs to clone private GitHub repositories using HTTPS,
+      # and the default `GITHUB_TOKEN` doesn't have sufficient permissions.
       gh_username:
         required: false
       gh_token:
@@ -46,11 +49,11 @@ jobs:
         if: inputs.go-private != ''
         run: git config --global url."https://${{ secrets.gh_username }}:${{ secrets.gh_token }}@github.com".insteadOf "https://github.com"
 
-      - name: Run GoReleaser dry-run
+      - name: Run GoReleaser Release
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: latest
+          version: "~> v2"
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

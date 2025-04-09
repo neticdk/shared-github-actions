@@ -5,6 +5,9 @@ name: Go Continuous Integration
 on:
   workflow_call:
     secrets:
+      # gh_username and gh_password are needed if `go get` (driven by
+      # `GOPRIVATE`) needs to clone private GitHub repositories using HTTPS,
+      # and the default `GITHUB_TOKEN` doesn't have sufficient permissions.
       gh_username:
         required: false
       gh_token:
@@ -69,10 +72,20 @@ jobs:
           go mod download
           go mod verify
 
+      - name: Cache golangci-lint
+        id: cache-golangci-lint
+        uses: actions/cache@v4
+        with:
+          path: .golangci-cache
+          key: golangci-lint-${{ runner.os }}-${{ hashFiles('.golangci.yml') }}
+          restore-keys: |
+            golangci-lint-${{ runner.os }}-
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: latest
+          version: v2.0
+          args: --cache-dir .golangci-cache
 
       # go test will compile the code, so we don't need to run go build
       - name: Go Compile and Test
@@ -86,7 +99,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: latest
+          version: "~> v2"
           install-only: true
 
       - name: Run GoReleaser healthcheck
