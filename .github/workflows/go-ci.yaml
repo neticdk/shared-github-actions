@@ -125,3 +125,7 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           vuln-type: "library"
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: go.mod
