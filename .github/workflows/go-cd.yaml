@@ -12,6 +12,9 @@ on:
         required: false
       gh_token:
         required: false
+      # The token used to push the Homebrew formula to the private repository.
+      homebrew_token:
+        required: false
     inputs:
       go-version:
         description: "The version of Go to use"
@@ -57,3 +60,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TOKEN: ${{ secrets.homebrew_token }}
