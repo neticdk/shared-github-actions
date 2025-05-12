@@ -15,6 +15,9 @@ on:
       # The token used to push the Homebrew formula to the private repository.
       homebrew_token:
         required: false
+      # satisfy actionlint
+      GH_NETIC_ROBOT_CLASSIC_TOKEN:
+        required: false
     inputs:
       go-version:
         description: "The version of Go to use"
@@ -24,11 +27,15 @@ on:
         description: "The GOPRIVATE environment variable"
         required: false
         type: string
+        default: github.com/containdk,github.com/neticdk
 
 jobs:
   release:
     env:
       GOPRIVATE: "${{ inputs.go-private }}"
+      GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
+      GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
+      HOMEBREW_TOKEN: ${{ secrets.homebrew_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -37,20 +44,16 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Go
-        if: inputs.go-version != ''
         uses: actions/setup-go@v5
         with:
+          # go-version takes precedence over go-version-file
+          # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
-
-      - name: Setup Go
-        if: inputs.go-version == ''
-        uses: actions/setup-go@v5
-        with:
           go-version-file: go.mod
 
       - name: Setup private repository access
         if: inputs.go-private != ''
-        run: git config --global url."https://${{ secrets.gh_username }}:${{ secrets.gh_token }}@github.com".insteadOf "https://github.com"
+        run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Run GoReleaser Release
         uses: goreleaser/goreleaser-action@v6
@@ -60,4 +63,8 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TOKEN: ${{ secrets.homebrew_token }}
+          HOMEBREW_TOKEN: ${{ env.HOMEBREW_TOKEN }}
+
+      - name: Clean up private repository access configuration
+        if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
+        run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
