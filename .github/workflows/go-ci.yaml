@@ -12,6 +12,9 @@ on:
         required: false
       gh_token:
         required: false
+      # satisfy actionlint
+      GH_NETIC_ROBOT_CLASSIC_TOKEN:
+        required: false
     inputs:
       go-version:
         description: "The version of Go to use"
@@ -37,26 +40,25 @@ jobs:
   tests:
     env:
       GOPRIVATE: "${{ inputs.go-private }}"
+      GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
+      GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Go
-        if: inputs.go-version != ''
         uses: actions/setup-go@v5
         with:
+          # go-version takes precedence over go-version-file
+          # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
-
-      - name: Setup Go
-        if: inputs.go-version == ''
-        uses: actions/setup-go@v5
-        with:
           go-version-file: go.mod
 
       - name: Setup private repository access
+        id: setup_git_creds
         if: inputs.go-private != ''
-        run: git config --global url."https://${{ secrets.gh_username }}:${{ secrets.gh_token }}@github.com".insteadOf "https://github.com"
+        run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Install Go dependencies
         run: |
@@ -83,13 +85,20 @@ jobs:
           version: "~> v2"
           args: check
 
+      - name: Clean up private repository access configuration
+        if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
+        run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
+
   vuln-scan:
     runs-on: ubuntu-latest
     env:
       GOPRIVATE: "${{ inputs.go-private }}"
+      GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
+      GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.30.0
         with:
@@ -102,13 +111,21 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
+          # go-version takes precedence over go-version-file
+          # if it is empty, go-version-file will be used
+          go-version: ${{ inputs.go-version }}
           go-version-file: go.mod
 
       - name: Setup private repository access
+        id: setup_git_creds
         if: inputs.go-private != ''
-        run: git config --global url."https://${{ secrets.gh_username }}:${{ secrets.gh_token }}@github.com".insteadOf "https://github.com"
+        run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Run govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck -format text ./...
+
+      - name: Clean up private repository access configuration
+        if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
+        run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
