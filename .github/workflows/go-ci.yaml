@@ -67,9 +67,7 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.0
-          # args: --cache-dir .golangci-cache
 
-      # go test will compile the code, so we don't need to run go build
       - name: Go Compile and Test
         run: go test -cover -v ./...
 
