@@ -21,6 +21,7 @@ on:
         description: "The GOPRIVATE environment variable"
         required: false
         type: string
+        default: github.com/containdk,github.com/neticdk
       run-benchmarks:
         description: "Run benchmarks"
         required: false
@@ -63,12 +64,10 @@ jobs:
           go mod verify
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v8
         with:
           version: v2.0
-          # args: --cache-dir .golangci-cache
 
-      # go test will compile the code, so we don't need to run go build
       - name: Go Compile and Test
         run: go test -cover -v ./...
 
@@ -77,6 +76,7 @@ jobs:
         run: go test -bench=./... ./...
 
       - name: Install GoReleaser
+        if: inputs.run-release-test
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
