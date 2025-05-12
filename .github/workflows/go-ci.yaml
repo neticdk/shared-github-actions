@@ -76,6 +76,7 @@ jobs:
         run: go test -bench=./... ./...
 
       - name: Install GoReleaser
+        if: inputs.run-release-test
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
