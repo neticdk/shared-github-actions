@@ -16,6 +16,11 @@ on:
       GH_NETIC_ROBOT_CLASSIC_TOKEN:
         required: false
     inputs:
+      runs-on:
+        description: "The target runner to run the job on"
+        required: false
+        type: string
+        default: ubuntu-latest
       go-version:
         description: "The version of Go to use"
         required: false
