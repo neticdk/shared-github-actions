@@ -28,6 +28,11 @@ on:
         required: false
         type: string
         default: github.com/containdk,github.com/neticdk
+      runs-on:
+        description: "The target runner to run the job on"
+        required: false
+        type: string
+        default: ubuntu-latest
 
 jobs:
   release:
@@ -36,7 +41,7 @@ jobs:
       GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
       GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
       HOMEBREW_TOKEN: ${{ secrets.homebrew_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
