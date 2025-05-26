@@ -35,6 +35,11 @@ on:
         required: false
         default: false
         type: boolean
+      run-govulncheck:
+        description: "Run govulncheck"
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   tests:
@@ -122,6 +127,7 @@ jobs:
         run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Run govulncheck
+        if: inputs.run-govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck -format text ./...
