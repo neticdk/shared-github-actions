@@ -64,6 +64,16 @@ jobs:
         id: setup_git_creds
         if: inputs.go-private != ''
         run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
+      
+      - name: Setup Git Credentials
+        run: |
+          git config --global user.name '${{ env.GH_USERNAME }}'
+          git config --global user.email 'netic-robot@users.noreply.github.com'
+          mkdir -p ~/.config/git
+          echo ""https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com/" > ~/.config/git/credentials
+          git config --global credential.helper store
+          git config --global --replace-all url.https://github.com/.insteadOf ssh://git@github.com/
+          git config --global --add url.https://github.com/.insteadOf git@github.com:
 
       - name: Install Go dependencies
         run: |
