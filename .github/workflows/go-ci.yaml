@@ -73,7 +73,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9 # v8
         with:
-          version: v2.2
+          version: v2.4
+          install-mode: "goinstall"
 
       - name: Go Compile and Test
         run: go test -cover -v ./...
