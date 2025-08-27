@@ -27,7 +27,7 @@ on:
         description: "The GOPRIVATE environment variable"
         required: false
         type: string
-        default: github.com/containdk,github.com/neticdk
+        default: github.com/containdk,github.com/neticdk,github.com/neticdk-k8s
 
 jobs:
   release:
