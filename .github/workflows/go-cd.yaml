@@ -55,6 +55,13 @@ jobs:
         if: inputs.go-private != ''
         run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
 
+      - name: Log in to the Docker registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run GoReleaser Release
         uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552 # v6
         with:
