@@ -50,6 +50,12 @@ on:
         required: false
         default: true
         type: boolean
+      run-coverage-report:
+        description: "Run code coverage report"
+        required: false
+        default: false
+        type: boolean
+
 
 jobs:
   tests:
@@ -174,7 +180,7 @@ jobs:
   code-coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && inputs.run-coverage-report
     needs: tests
     permissions:
       contents:      read
