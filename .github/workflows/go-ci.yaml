@@ -40,6 +40,11 @@ on:
         required: false
         default: true
         type: boolean
+      govulncheck-fail:
+        description: "Fail the workflow if govulncheck finds vulnerabilities"
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   tests:
@@ -129,6 +134,7 @@ jobs:
 
       - name: Run govulncheck
         if: inputs.run-govulncheck
+        continue-on-error: ${{ !inputs.govulncheck-fail }}
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck -format text ./...
