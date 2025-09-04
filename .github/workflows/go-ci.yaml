@@ -45,6 +45,11 @@ on:
         required: false
         default: true
         type: boolean
+      run-trivy-scan:
+        description: "Run Trivy vulnerability scanner"
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   tests:
@@ -100,12 +105,10 @@ jobs:
         if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
         run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
 
-  vuln-scan:
+  trivy-scan:
+    name: Trivy Scan
+    if: inputs.run-trivy-scan
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: "${{ inputs.go-private }}"
-      GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
-      GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -118,6 +121,18 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           vuln-type: "library"
+
+  govulncheck-scan:
+    name: Govulncheck Scan
+    if: inputs.run-govulncheck
+    runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: "${{ inputs.go-private }}"
+      GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
+      GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Setup Go
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
@@ -133,11 +148,17 @@ jobs:
         run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Run govulncheck
-        if: inputs.run-govulncheck
-        continue-on-error: ${{ !inputs.govulncheck-fail }}
+        id: govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck -format text ./...
+          if ! govulncheck -format text ./...; then
+            if [[ "${{ inputs.govulncheck-fail }}" == "true" ]]; then
+              echo "::error::govulncheck found vulnerabilities and is configured to fail the workflow."
+              exit 1
+            else
+              echo "::warning::govulncheck found vulnerabilities but is configured to not fail the workflow."
+            fi
+          fi
 
       - name: Clean up private repository access configuration
         if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
