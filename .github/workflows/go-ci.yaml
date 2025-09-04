@@ -177,6 +177,8 @@ jobs:
     if: github.event_name == 'pull_request'
     needs: tests
     permissions:
+      contents:      read
+      actions:       read
       pull-requests: write
     steps:
       - uses: fgrosse/go-coverage-report@8c1d1a09864211d258937b1b1a5b849f7e4f2682 # v1
