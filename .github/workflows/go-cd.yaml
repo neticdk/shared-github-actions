@@ -33,6 +33,7 @@ jobs:
   release:
     env:
       GOPRIVATE: "${{ inputs.go-private }}"
+      GOEXPERIMENT: jsonv2
       GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
       GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
       HOMEBREW_TOKEN: ${{ secrets.homebrew_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}

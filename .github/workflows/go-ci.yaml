@@ -56,12 +56,12 @@ on:
         default: false
         type: boolean
 
-
 jobs:
   tests:
     name: Tests
     env:
       GOPRIVATE: "${{ inputs.go-private }}"
+      GOEXPERIMENT: jsonv2
       GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
       GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
     runs-on: ubuntu-latest
@@ -141,6 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOPRIVATE: "${{ inputs.go-private }}"
+      GOEXPERIMENT: jsonv2
       GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
       GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
     steps:
@@ -183,8 +184,8 @@ jobs:
     if: github.event_name == 'pull_request' && inputs.run-coverage-report
     needs: tests
     permissions:
-      contents:      read
-      actions:       read
+      contents: read
+      actions: read
       pull-requests: write
     steps:
       - uses: fgrosse/go-coverage-report@8c1d1a09864211d258937b1b1a5b849f7e4f2682 # v1
