@@ -95,8 +95,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9
         with:
-          version: v2.11.3
-          install-mode: "goinstall"
+          version: v2.11.4
 
       - name: Go Compile and Test
         run: go test -cover -coverprofile=coverage.txt -v ./...
@@ -184,7 +183,7 @@ jobs:
 
   code-coverage:
     name: Code Coverage
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && inputs.run-coverage-report
     needs: tests
     permissions:
