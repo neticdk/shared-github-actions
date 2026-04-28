@@ -16,6 +16,11 @@ on:
       GH_NETIC_ROBOT_CLASSIC_TOKEN:
         required: false
     inputs:
+      runs-on:
+        description: "The runner to use"
+        required: false
+        type: string
+        default: ubuntu-latest
       go-version:
         description: "The version of Go to use"
         required: false
@@ -64,7 +69,7 @@ jobs:
       GOEXPERIMENT: jsonv2
       GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
       GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -121,7 +126,7 @@ jobs:
   trivy-scan:
     name: Trivy Scan
     if: inputs.run-trivy-scan
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -138,7 +143,7 @@ jobs:
   govulncheck-scan:
     name: Govulncheck Scan
     if: inputs.run-govulncheck
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     env:
       GOPRIVATE: "${{ inputs.go-private }}"
       GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
@@ -179,7 +184,7 @@ jobs:
 
   code-coverage:
     name: Code Coverage
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     if: github.event_name == 'pull_request' && inputs.run-coverage-report
     needs: tests
     permissions:
