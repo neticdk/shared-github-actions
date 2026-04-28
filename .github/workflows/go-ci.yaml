@@ -75,7 +75,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Go
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           # go-version takes precedence over go-version-file
           # if it is empty, go-version-file will be used
@@ -101,7 +101,7 @@ jobs:
         run: go test -cover -coverprofile=coverage.txt -v ./...
 
       - name: Archive code coverage results
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: code-coverage
           path: coverage.txt
@@ -112,7 +112,7 @@ jobs:
 
       - name: Install GoReleaser
         if: inputs.run-release-test
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7
+        uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8 # v7
         with:
           distribution: goreleaser
           version: "~> v2"
@@ -152,7 +152,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Go
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           # go-version takes precedence over go-version-file
           # if it is empty, go-version-file will be used
