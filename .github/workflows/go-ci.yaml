@@ -60,6 +60,11 @@ on:
         required: false
         default: false
         type: boolean
+      workdir:
+        description: "The working directory for the ci process"
+        required: false
+        type: string
+        default: .
 
 jobs:
   tests:
@@ -80,7 +85,7 @@ jobs:
           # go-version takes precedence over go-version-file
           # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
-          go-version-file: go.mod
+          go-version-file: ${{ inputs.workdir }}/go.mod
 
       - name: Setup private repository access
         id: setup_git_creds
@@ -89,6 +94,7 @@ jobs:
 
       - name: Install Go dependencies
         run: |
+          cd ${{ inputs.workdir }}
           go mod download
           go mod verify
 
@@ -96,19 +102,24 @@ jobs:
         uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9
         with:
           version: v2.12.1
+          working-directory: ${{ inputs.workdir }}
 
       - name: Go Compile and Test
-        run: go test -cover -coverprofile=coverage.txt -v ./...
+        run: |
+          cd ${{ inputs.workdir }}
+          go test -cover -coverprofile=${{ inputs.workdir }}/coverage.txt -v ./...
 
       - name: Archive code coverage results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: code-coverage
-          path: coverage.txt
+          path: ${{ inputs.workdir }}/coverage.txt
 
       - name: Run benchmarks
         if: inputs.run-benchmarks
-        run: go test -bench=./... ./...
+        run: |
+          cd ${{ inputs.workdir }}
+          go test -bench=./... ./...
 
       - name: Install GoReleaser
         if: inputs.run-release-test
@@ -117,6 +128,7 @@ jobs:
           distribution: goreleaser
           version: "~> v2"
           args: check
+          workdir: ${{ inputs.workdir }}
 
       - name: Clean up private repository access configuration
         if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
@@ -134,6 +146,7 @@ jobs:
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
           scan-type: "fs"
+          scan-ref: ${{ inputs.workdir }}
           format: "table"
           exit-code: "1"
           ignore-unfixed: true
@@ -157,7 +170,7 @@ jobs:
           # go-version takes precedence over go-version-file
           # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
-          go-version-file: go.mod
+          go-version-file: ${{ inputs.workdir }}/go.mod
 
       - name: Setup private repository access
         id: setup_git_creds
@@ -167,6 +180,7 @@ jobs:
       - name: Run govulncheck
         id: govulncheck
         run: |
+          cd ${{ inputs.workdir }}
           go install golang.org/x/vuln/cmd/govulncheck@latest
           if ! govulncheck -format text ./...; then
             if [[ "${{ inputs.govulncheck-fail }}" == "true" ]]; then
