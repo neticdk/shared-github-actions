@@ -107,7 +107,7 @@ jobs:
       - name: Go Compile and Test
         run: |
           cd ${{ inputs.workdir }}
-          go test -cover -coverprofile=${{ inputs.workdir }}/coverage.txt -v ./...
+          go test -cover -coverprofile=coverage.txt -v ./...
 
       - name: Archive code coverage results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
