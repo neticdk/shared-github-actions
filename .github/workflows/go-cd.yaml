@@ -28,6 +28,11 @@ on:
         required: false
         type: string
         default: github.com/containdk,github.com/neticdk,github.com/neticdk-k8s
+      workdir:
+        description: "The working directory for the release process"
+        required: false
+        type: string
+        default: .
 
 jobs:
   release:
@@ -50,7 +55,7 @@ jobs:
           # go-version takes precedence over go-version-file
           # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
-          go-version-file: go.mod
+          go-version-file: ${{ inputs.workdir }}/go.mod
 
       - name: Setup private repository access
         if: inputs.go-private != ''
@@ -79,6 +84,7 @@ jobs:
           distribution: goreleaser
           version: "~> v2"
           args: release --clean --verbose
+          workdir: ${{ inputs.workdir }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TOKEN: ${{ env.HOMEBREW_TOKEN }}
