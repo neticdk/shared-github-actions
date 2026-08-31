@@ -44,6 +44,9 @@ jobs:
       HOMEBREW_TOKEN: ${{ secrets.homebrew_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
     runs-on: ubuntu-latest
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: neticdk/gh-free-disk-space-ubuntu@v1
+
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
