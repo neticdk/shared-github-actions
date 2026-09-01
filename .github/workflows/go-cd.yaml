@@ -61,7 +61,7 @@ jobs:
           go-version-file: ${{ inputs.workdir }}/go.mod
 
       - name: Setup private repository access
-        uses: ./.github/actions/setup-private-git
+        uses: $/.github/actions/setup-private-git
         with:
           go-private: ${{ inputs.go-private }}
           gh-username: ${{ env.GH_USERNAME }}
