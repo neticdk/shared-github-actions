@@ -101,12 +101,6 @@ jobs:
           go mod download
           go mod verify
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9
-        with:
-          version: v2.12.1
-          working-directory: ${{ inputs.workdir }}
-
       - name: Go Compile and Test
         run: |
           cd ${{ inputs.workdir }}
@@ -132,6 +126,47 @@ jobs:
           version: "~> v2"
           args: check
           workdir: ${{ inputs.workdir }}
+
+      - name: Clean up private repository access configuration
+        if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
+        run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
+
+  golangci-lint:
+    name: Golangci-lint
+    runs-on: ${{ inputs.runs-on }}
+    env:
+      GOPRIVATE: "${{ inputs.go-private }}"
+      GOEXPERIMENT: jsonv2
+      GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
+      GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+        with:
+          # go-version takes precedence over go-version-file
+          # if it is empty, go-version-file will be used
+          go-version: ${{ inputs.go-version }}
+          go-version-file: ${{ inputs.workdir }}/go.mod
+
+      - name: Setup private repository access
+        id: setup_git_creds
+        if: inputs.go-private != ''
+        run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
+
+      - name: Install Go dependencies
+        run: |
+          cd ${{ inputs.workdir }}
+          go mod download
+          go mod verify
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9
+        with:
+          version: v2.13.2
+          working-directory: ${{ inputs.workdir }}
 
       - name: Clean up private repository access configuration
         if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
