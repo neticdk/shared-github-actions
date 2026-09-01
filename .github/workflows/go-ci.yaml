@@ -91,9 +91,11 @@ jobs:
           go-version-file: ${{ inputs.workdir }}/go.mod
 
       - name: Setup private repository access
-        id: setup_git_creds
-        if: inputs.go-private != ''
-        run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
+        uses: ./.github/actions/setup-private-git
+        with:
+          go-private: ${{ inputs.go-private }}
+          gh-username: ${{ env.GH_USERNAME }}
+          gh-token: ${{ env.GH_TOKEN }}
 
       - name: Install Go dependencies
         run: |
@@ -127,10 +129,6 @@ jobs:
           args: check
           workdir: ${{ inputs.workdir }}
 
-      - name: Clean up private repository access configuration
-        if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
-        run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
-
   golangci-lint:
     name: Golangci-lint
     runs-on: ${{ inputs.runs-on }}
@@ -152,9 +150,11 @@ jobs:
           go-version-file: ${{ inputs.workdir }}/go.mod
 
       - name: Setup private repository access
-        id: setup_git_creds
-        if: inputs.go-private != ''
-        run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
+        uses: ./.github/actions/setup-private-git
+        with:
+          go-private: ${{ inputs.go-private }}
+          gh-username: ${{ env.GH_USERNAME }}
+          gh-token: ${{ env.GH_TOKEN }}
 
       - name: Install Go dependencies
         run: |
@@ -167,10 +167,6 @@ jobs:
         with:
           version: v2.13.2
           working-directory: ${{ inputs.workdir }}
-
-      - name: Clean up private repository access configuration
-        if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
-        run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
 
   trivy-scan:
     name: Trivy Scan
@@ -211,9 +207,11 @@ jobs:
           go-version-file: ${{ inputs.workdir }}/go.mod
 
       - name: Setup private repository access
-        id: setup_git_creds
-        if: inputs.go-private != ''
-        run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
+        uses: ./.github/actions/setup-private-git
+        with:
+          go-private: ${{ inputs.go-private }}
+          gh-username: ${{ env.GH_USERNAME }}
+          gh-token: ${{ env.GH_TOKEN }}
 
       - name: Run govulncheck
         id: govulncheck
@@ -228,10 +226,6 @@ jobs:
               echo "::warning::govulncheck found vulnerabilities but is configured to not fail the workflow."
             fi
           fi
-
-      - name: Clean up private repository access configuration
-        if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
-        run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
 
   code-coverage:
     name: Code Coverage
