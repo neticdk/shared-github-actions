@@ -1,0 +1,16 @@
+{
+  "name": "setup-private-git-action",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Setup private Git credentials action",
+  "main": "main.js",
+  "scripts": {
+    "build": "ncc build main.js -o dist/main --source-map --license licenses.txt && ncc build cleanup.js -o dist/cleanup --source-map --license licenses.txt"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "0.38.4"
+  }
+}

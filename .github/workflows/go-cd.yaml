@@ -33,6 +33,11 @@ on:
         required: false
         type: string
         default: .
+      run-free-disk-space:
+        description: "Free disk space on Ubuntu runner"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   release:
@@ -45,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Free Disk Space (Ubuntu)
+        if: inputs.run-free-disk-space
         uses: neticdk/gh-free-disk-space-ubuntu@v1
 
       - name: Checkout code
@@ -61,8 +67,11 @@ jobs:
           go-version-file: ${{ inputs.workdir }}/go.mod
 
       - name: Setup private repository access
-        if: inputs.go-private != ''
-        run: git config --global url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf "https://github.com"
+        uses: $/.github/actions/setup-private-git
+        with:
+          go-private: ${{ inputs.go-private }}
+          gh-username: ${{ env.GH_USERNAME }}
+          gh-token: ${{ env.GH_TOKEN }}
 
       - name: Log in to the Docker registry
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
@@ -91,7 +100,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TOKEN: ${{ env.HOMEBREW_TOKEN }}
-
-      - name: Clean up private repository access configuration
-        if: always() && steps.setup_git_creds.outcome == 'success' && inputs.go-private != ''
-        run: git config --global --unset url."https://${{ env.GH_USERNAME }}:${{ env.GH_TOKEN }}@github.com".insteadOf
