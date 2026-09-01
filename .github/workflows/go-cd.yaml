@@ -33,6 +33,11 @@ on:
         required: false
         type: string
         default: .
+      run-free-disk-space:
+        description: "Free disk space on Ubuntu runner"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   release:
@@ -45,6 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Free Disk Space (Ubuntu)
+        if: inputs.run-free-disk-space
         uses: neticdk/gh-free-disk-space-ubuntu@v1
 
       - name: Checkout code
