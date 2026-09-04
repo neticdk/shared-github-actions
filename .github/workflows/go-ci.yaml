@@ -50,6 +50,11 @@ on:
         required: false
         default: true
         type: boolean
+      run-gosec:
+        description: "Run gosec security scanner"
+        required: false
+        default: true
+        type: boolean
       run-trivy-scan:
         description: "Run Trivy vulnerability scanner"
         required: false
@@ -173,6 +178,22 @@ jobs:
         with:
           version: v2.13.2
           working-directory: ${{ inputs.workdir }}
+
+  gosec:
+    env:
+      GO111MODULE: on
+      GOPRIVATE: "${{ inputs.go-private }}"
+      GITHUB_AUTHENTICATION_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
+    name: Gosec security scan
+    if: inputs.run-gosec
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@deb54465fea23d19a77f037e11e6589021f8501d # v2
+        with:
+          args: ./...
 
   trivy-scan:
     name: Trivy Scan
