@@ -190,6 +190,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          # go-version takes precedence over go-version-file
+          # if it is empty, go-version-file will be used
+          go-version: ${{ inputs.go-version }}
+          go-version-file: ${{ inputs.workdir }}/go.mod
+      - name: Setup private repository access
+        uses: $/.github/actions/setup-private-git
+        with:
+          go-private: ${{ inputs.go-private }}
+          gh-username: ${{ env.GH_USERNAME }}
+          gh-token: ${{ env.GH_TOKEN }}
       - name: Run Gosec Security Scanner
         uses: securego/gosec@deb54465fea23d19a77f037e11e6589021f8501d # v2
         with:
