@@ -100,6 +100,9 @@ jobs:
           # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
           go-version-file: ${{ inputs.workdir }}/go.mod
+          # Without this the cache lookup starts at the repository root, which
+          # in a monorepo has no go.mod, and nothing is ever cached.
+          cache-dependency-path: ${{ inputs.workdir }}/go.sum
 
       - name: Setup private repository access
         uses: $/.github/actions/setup-private-git
@@ -159,6 +162,9 @@ jobs:
           # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
           go-version-file: ${{ inputs.workdir }}/go.mod
+          # Without this the cache lookup starts at the repository root, which
+          # in a monorepo has no go.mod, and nothing is ever cached.
+          cache-dependency-path: ${{ inputs.workdir }}/go.sum
 
       - name: Setup private repository access
         uses: $/.github/actions/setup-private-git
@@ -198,6 +204,9 @@ jobs:
         with:
           go-version: ${{ inputs.go-version }}
           go-version-file: ${{ inputs.workdir }}/go.mod
+          # Without this the cache lookup starts at the repository root, which
+          # in a monorepo has no go.mod, and nothing is ever cached.
+          cache-dependency-path: ${{ inputs.workdir }}/go.sum
 
       - name: Setup private repository access
         uses: $/.github/actions/setup-private-git
@@ -251,6 +260,9 @@ jobs:
           # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
           go-version-file: ${{ inputs.workdir }}/go.mod
+          # Without this the cache lookup starts at the repository root, which
+          # in a monorepo has no go.mod, and nothing is ever cached.
+          cache-dependency-path: ${{ inputs.workdir }}/go.sum
 
       - name: Setup private repository access
         uses: $/.github/actions/setup-private-git
