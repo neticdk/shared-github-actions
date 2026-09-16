@@ -19,6 +19,11 @@ on:
       GH_NETIC_ROBOT_CLASSIC_TOKEN:
         required: false
     inputs:
+      runs-on:
+        description: "The runner to use"
+        required: false
+        type: string
+        default: ubuntu-latest
       go-version:
         description: "The version of Go to use"
         required: false
@@ -47,7 +52,7 @@ jobs:
       GH_USERNAME: ${{ secrets.gh_username || 'gh-netic-robot' }}
       GH_TOKEN: ${{ secrets.gh_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
       HOMEBREW_TOKEN: ${{ secrets.homebrew_token || secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Free Disk Space (Ubuntu)
         if: inputs.run-free-disk-space
@@ -65,6 +70,9 @@ jobs:
           # if it is empty, go-version-file will be used
           go-version: ${{ inputs.go-version }}
           go-version-file: ${{ inputs.workdir }}/go.mod
+          # Without this the cache lookup starts at the repository root, which
+          # in a monorepo has no go.mod, and nothing is ever cached.
+          cache-dependency-path: ${{ inputs.workdir }}/go.sum
 
       - name: Setup private repository access
         uses: $/.github/actions/setup-private-git
