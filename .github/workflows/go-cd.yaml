@@ -38,6 +38,15 @@ on:
         required: false
         type: string
         default: .
+      run-docker-setup:
+        description: >-
+          Log in to ghcr.io and set up QEMU and Buildx. Needed only when the
+          GoReleaser config builds container images; a release that only
+          produces binaries does not use any of it, and requiring a Docker
+          daemon rules out runners that have none.
+        required: false
+        default: true
+        type: boolean
       run-free-disk-space:
         description: "Free disk space on Ubuntu runner"
         required: false
@@ -82,6 +91,7 @@ jobs:
           gh-token: ${{ env.GH_TOKEN }}
 
       - name: Log in to the Docker registry
+        if: inputs.run-docker-setup
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
@@ -91,9 +101,11 @@ jobs:
       # Add support for more platforms with QEMU (optional)
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
+        if: inputs.run-docker-setup
         uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4
 
       - name: Set up Docker Buildx
+        if: inputs.run-docker-setup
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
         with:
           driver: docker-container
