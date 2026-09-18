@@ -50,6 +50,14 @@ on:
         required: false
         default: true
         type: boolean
+      govulncheck-fail-without-fix:
+        description: >-
+          Fail the workflow for vulnerabilities that have no released fix.
+          These are reported as warnings by default, because failing on them
+          blocks every branch without offering an action that would clear it.
+        required: false
+        default: false
+        type: boolean
       run-gosec:
         description: "Run gosec security scanner"
         required: false
@@ -273,17 +281,59 @@ jobs:
 
       - name: Run govulncheck
         id: govulncheck
+        env:
+          REPORT: ${{ runner.temp }}/govulncheck.json
         run: |
           cd ${{ inputs.workdir }}
           go install golang.org/x/vuln/cmd/govulncheck@latest
-          if ! govulncheck -format text ./...; then
-            if [[ "${{ inputs.govulncheck-fail }}" == "true" ]]; then
-              echo "::error::govulncheck found vulnerabilities and is configured to fail the workflow."
-              exit 1
-            else
-              echo "::warning::govulncheck found vulnerabilities but is configured to not fail the workflow."
-            fi
+
+          # The text report is what a human reads, and its exit status is the
+          # cheap first check: zero means nothing reachable was found and
+          # there is nothing to classify.
+          status=0
+          govulncheck -format text ./... || status=$?
+          if [[ $status -eq 0 ]]; then
+            exit 0
           fi
+
+          if [[ "${{ inputs.govulncheck-fail }}" != "true" ]]; then
+            echo "::warning::govulncheck found vulnerabilities but is configured to not fail the workflow."
+            exit 0
+          fi
+
+          if [[ "${{ inputs.govulncheck-fail-without-fix }}" == "true" ]]; then
+            echo "::error::govulncheck found vulnerabilities and is configured to fail the workflow."
+            exit 1
+          fi
+
+          if ! command -v jq >/dev/null; then
+            echo "::error::govulncheck found vulnerabilities, and jq is not available to establish whether any of them have a released fix."
+            exit 1
+          fi
+
+          # Classify what was found. JSON mode always exits 0, so the decision
+          # comes from the report rather than from an exit status. A finding
+          # whose trace reaches a function is one that affects this code, and
+          # fixed_version is empty when the advisory has no released fix.
+          govulncheck -format json ./... > "${REPORT}"
+
+          called='select(.finding) | .finding | select(.trace[0].function != null)'
+          fixable=$(jq -r "${called}"' | select(.fixed_version != null and .fixed_version != "") | "\(.osv) in \(.trace[0].module), fixed in \(.fixed_version)"' "${REPORT}" | sort -u)
+          unfixable=$(jq -r "${called}"' | select(.fixed_version == null or .fixed_version == "") | "\(.osv) in \(.trace[0].module)"' "${REPORT}" | sort -u)
+
+          while IFS= read -r line; do
+            [[ -n "$line" ]] && echo "::warning::govulncheck: no released fix for ${line}"
+          done <<< "${unfixable}"
+
+          if [[ -n "${fixable}" ]]; then
+            while IFS= read -r line; do
+              echo "::error::govulncheck: ${line}"
+            done <<< "${fixable}"
+            echo "::error::govulncheck found vulnerabilities with a released fix."
+            exit 1
+          fi
+
+          echo "::notice::govulncheck found vulnerabilities, but none of them has a released fix. Reported as warnings; set govulncheck-fail-without-fix to fail on these too."
 
   code-coverage:
     name: Code Coverage

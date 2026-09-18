@@ -65,7 +65,8 @@ All inputs are optional.
 | `run-benchmarks` | boolean | `false` | Run Go benchmarks after tests. |
 | `run-release-test` | boolean | `false` | Validate GoReleaser configuration in `workdir`. |
 | `run-govulncheck` | boolean | `true` | Run govulncheck. |
-| `govulncheck-fail` | boolean | `true` | Fail CI when govulncheck exits unsuccessfully. Set to `false` to emit a warning instead. |
+| `govulncheck-fail` | boolean | `true` | Fail CI when govulncheck reports a vulnerability that has a released fix. Set to `false` to emit a warning instead. |
+| `govulncheck-fail-without-fix` | boolean | `false` | Also fail for vulnerabilities that have no released fix. |
 | `run-gosec` | boolean | `true` | Run gosec in `workdir`, built with the selected Go toolchain. |
 | `run-trivy-scan` | boolean | `true` | Scan `workdir` with Trivy. |
 | `run-coverage-report` | boolean | `false` | Report coverage on pull requests. |
@@ -74,6 +75,18 @@ All inputs are optional.
 Tests, golangci-lint, and gosec use `GOEXPERIMENT=jsonv2`. Choose a Go version
 that supports this experiment. gosec is installed from source with the project's
 selected Go toolchain and scans from `workdir`.
+
+govulncheck fails the build for a vulnerability that reaches your code **and
+has a released fix**. One with no fix available is reported as a warning
+instead, because failing on it blocks every branch in the repository without
+offering an action that would clear it, and a red check nobody can clear is one
+people learn to ignore. Set `govulncheck-fail-without-fix` to `true` where that
+trade is not the right one, such as a repository that must not ship a known
+vulnerability at all. Set `govulncheck-fail` to `false` to never fail.
+
+The full text report is printed either way. Classification needs `jq`, which is
+present on GitHub-hosted runners; where it is missing the step fails rather than
+guessing.
 
 ## Go CD
 
