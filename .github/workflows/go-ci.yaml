@@ -225,7 +225,7 @@ jobs:
 
       - name: Install gosec
         working-directory: ${{ inputs.workdir }}
-        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.28.0
+        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.30.0
 
       - name: Run Gosec Security Scanner
         working-directory: ${{ inputs.workdir }}
