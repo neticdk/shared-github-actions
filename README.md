@@ -74,7 +74,8 @@ All inputs are optional.
 
 Tests, golangci-lint, and gosec use `GOEXPERIMENT=jsonv2`. Choose a Go version
 that supports this experiment. gosec is installed from source with the project's
-selected Go toolchain and scans from `workdir`.
+selected Go toolchain and scans from `workdir`. gosec v2.30.0 needs Go 1.26
+or later.
 
 govulncheck fails the build for a vulnerability that reaches your code **and
 has a released fix**. One with no fix available is reported as a warning
