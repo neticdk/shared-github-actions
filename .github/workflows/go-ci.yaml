@@ -68,6 +68,11 @@ on:
         required: false
         default: true
         type: boolean
+      trivy-version:
+        description: "Trivy version to scan with"
+        required: false
+        default: "v0.76.1"
+        type: string
       run-coverage-report:
         description: "Run code coverage report"
         required: false
@@ -239,9 +244,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # Installed from the GitHub release rather than by the action's
+      # setup-trivy, whose install script downloads the tarball from
+      # get.trivy.dev. That host stopped resolving on 2026-11-03
+      # (aquasecurity/setup-trivy#42), failing every install without a cached
+      # binary. The tarball is verified against the release's checksums.
+      - name: Install Trivy
+        env:
+          TRIVY_VERSION: ${{ inputs.trivy-version }}
+        run: |
+          set -euo pipefail
+          version="${TRIVY_VERSION#v}"
+          case "$RUNNER_ARCH" in
+            X64) arch=64bit ;;
+            ARM64) arch=ARM64 ;;
+            *) echo "::error::unsupported runner architecture: $RUNNER_ARCH"; exit 1 ;;
+          esac
+          tarball="trivy_${version}_Linux-${arch}.tar.gz"
+          base="https://github.com/aquasecurity/trivy/releases/download/v${version}"
+          dir="$RUNNER_TEMP/trivy"
+          mkdir -p "$dir/bin"
+          cd "$dir"
+          curl -fsSLO "$base/$tarball"
+          curl -fsSLO "$base/trivy_${version}_checksums.txt"
+          grep -E "^[0-9a-f]{64}  ${tarball}\$" "trivy_${version}_checksums.txt" | sha256sum -c -
+          tar -xzf "$tarball" -C bin trivy
+          echo "$dir/bin" >> "$GITHUB_PATH"
+          bin/trivy --version
+
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          skip-setup-trivy: true
           scan-type: "fs"
           scan-ref: ${{ inputs.workdir }}
           format: "table"

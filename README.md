@@ -69,6 +69,7 @@ All inputs are optional.
 | `govulncheck-fail-without-fix` | boolean | `false` | Also fail for vulnerabilities that have no released fix. |
 | `run-gosec` | boolean | `true` | Run gosec in `workdir`, built with the selected Go toolchain. |
 | `run-trivy-scan` | boolean | `true` | Scan `workdir` with Trivy. |
+| `trivy-version` | string | `v0.76.1` | Trivy version to scan with. |
 | `run-coverage-report` | boolean | `false` | Report coverage on pull requests. |
 | `run-free-disk-space` | boolean | `false` | Free disk space in the tests job on an Ubuntu runner. |
 
