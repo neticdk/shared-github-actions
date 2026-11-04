@@ -68,6 +68,11 @@ on:
         required: false
         default: true
         type: boolean
+      trivy-version:
+        description: "Trivy version to scan with"
+        required: false
+        default: "v0.76.1"
+        type: string
       run-coverage-report:
         description: "Run code coverage report"
         required: false
@@ -240,8 +245,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          # Set explicitly: the action defaults to an older Trivy. v0.76.1
+          # carries the mitigation for the eMudhra intermediate CA key
+          # compromise.
+          version: ${{ inputs.trivy-version }}
           scan-type: "fs"
           scan-ref: ${{ inputs.workdir }}
           format: "table"
