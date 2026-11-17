@@ -206,6 +206,11 @@ The image is `ghcr.io/<owner>/<repository>` and is tagged with the Git ref name.
 A tag without a pre-release suffix, such as `v1.2.3` but not `v1.3.0-rc.1`, is
 also pushed as `latest`. The build runs without a cache.
 
+The image carries the standard OCI labels `org.opencontainers.image.source`,
+`url`, `revision`, `version` (the first tag) and `created` (the commit time,
+so a rebuild of the same commit gets the same labels). Add or override labels
+with the `labels` input.
+
 The build job has no OIDC token. A separate job receives the image digest,
 signs SLSA build provenance for it through GitHub artifact attestations,
 pushes the attestation to the registry beside the image, and signs the image
@@ -244,6 +249,7 @@ All inputs are optional.
 | `target` | string | Unset | Dockerfile stage to build. |
 | `platforms` | string | `linux/amd64,linux/arm64` | Platforms to build for. |
 | `build-args` | string | Unset | Build arguments, one `NAME=value` per line. |
+| `labels` | string | Unset | Extra image labels, one `NAME=value` per line, added after the default OCI labels. |
 | `sbom` | boolean | `false` | Attach a BuildKit SBOM to the image. |
 | `sign` | boolean | `true` | Also sign the image with cosign, keyless. |
 | `runs-on` | string | `ubuntu-latest` | Runner for the build job. |
