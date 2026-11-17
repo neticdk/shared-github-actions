@@ -4,6 +4,7 @@ Reusable workflows for testing and releasing Go projects:
 
 - [Go CI](.github/workflows/go-ci.yaml): tests, linting, security scans, and optional coverage reports.
 - [Go CD](.github/workflows/go-cd.yaml): releases with GoReleaser v2 and support for publishing container images to GHCR.
+- [Container CD](.github/workflows/container-cd.yaml): builds a Dockerfile, pushes the image to GHCR, and signs its build provenance.
 
 ## Go CI
 
@@ -129,6 +130,78 @@ All inputs are optional.
 | `go-private` | string | `github.com/containdk,github.com/neticdk,github.com/neticdk-k8s` | Value of `GOPRIVATE`. |
 | `workdir` | string | `.` | Project directory containing the Go module and GoReleaser configuration. |
 | `run-free-disk-space` | boolean | `false` | Free disk space before the release. |
+
+## Container CD
+
+For an image built from a Dockerfile rather than by GoReleaser, add
+`.github/workflows/release.yaml`:
+
+```yaml
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  image:
+    uses: neticdk/shared-github-actions/.github/workflows/container-cd.yaml@main
+    with:
+      build-args: |
+        VERSION=${{ github.ref_name }}
+```
+
+The image is `ghcr.io/<owner>/<repository>` and is tagged with the Git ref name.
+A tag without a pre-release suffix, such as `v1.2.3` but not `v1.3.0-rc.1`, is
+also pushed as `latest`. The build runs without a cache.
+
+The build job has no OIDC token. A separate job receives the image digest,
+signs SLSA build provenance for it through GitHub artifact attestations,
+pushes the attestation to the registry beside the image, and signs the image
+with cosign. Since the signing job belongs to this reusable workflow, the
+provenance names it as the builder, which gives SLSA Build L3. Verify with:
+
+```sh
+gh attestation verify oci://ghcr.io/containdk/kube-ovn-edge:v1.2.3 \
+  --repo containdk/kube-ovn-edge \
+  --signer-workflow neticdk/shared-github-actions/.github/workflows/container-cd.yaml
+```
+
+A Dockerfile that needs a secret, such as a token for private Go modules,
+mounts it with `RUN --mount=type=secret,id=GITHUB_TOKEN` and gets it through
+the `build-secrets` secret:
+
+```yaml
+    secrets:
+      build-secrets: |
+        GITHUB_TOKEN=${{ secrets.GH_NETIC_ROBOT_CLASSIC_TOKEN }}
+```
+
+The workflow outputs `image` and `digest` for later jobs, such as one that
+packages a Helm chart pointing at the image.
+
+### Container CD inputs
+
+All inputs are optional.
+
+| Input | Type | Default | Description |
+| --- | --- | --- | --- |
+| `image` | string | `ghcr.io/<owner>/<repository>` | Image to push, without a tag. Must be on `ghcr.io`. |
+| `tags` | string | Ref name, plus `latest` for a release tag | Tags to push, one per line. |
+| `context` | string | `.` | Build context. |
+| `file` | string | `Dockerfile` | Dockerfile, relative to the repository root. |
+| `target` | string | Unset | Dockerfile stage to build. |
+| `platforms` | string | `linux/amd64,linux/arm64` | Platforms to build for. |
+| `build-args` | string | Unset | Build arguments, one `NAME=value` per line. |
+| `sbom` | boolean | `false` | Attach a BuildKit SBOM to the image. |
+| `sign` | boolean | `true` | Also sign the image with cosign, keyless. |
+| `runs-on` | string | `ubuntu-latest` | Runner for the build job. |
 
 ## Secrets and permissions
 
