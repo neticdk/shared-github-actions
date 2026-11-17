@@ -105,12 +105,18 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write
+  attestations: write
 
 jobs:
   release:
     uses: neticdk/shared-github-actions/.github/workflows/go-cd.yaml@main
     secrets: inherit
 ```
+
+All four permissions are required, even for a release without container
+images. GitHub refuses to start the workflow when the caller grants less than
+its jobs ask for.
 
 The project needs a GoReleaser v2 configuration in `workdir`. Configure its
 builds, release artifacts, container images, and Homebrew publishing as needed.
@@ -126,10 +132,49 @@ All inputs are optional.
 
 | Input | Type | Default | Description |
 | --- | --- | --- | --- |
+| `runs-on` | string | `ubuntu-latest` | Runner for the release job. The provenance jobs always run on `ubuntu-latest`. |
 | `go-version` | string | Unset | Go version override. Otherwise, setup reads `go.mod` in `workdir`. |
 | `go-private` | string | `github.com/containdk,github.com/neticdk,github.com/neticdk-k8s` | Value of `GOPRIVATE`. |
 | `workdir` | string | `.` | Project directory containing the Go module and GoReleaser configuration. |
+| `run-docker-setup` | boolean | `true` | Log in to `ghcr.io` and set up QEMU and Buildx. Set to `false` for a release that only builds binaries. |
 | `run-free-disk-space` | boolean | `false` | Free disk space before the release. |
+
+### Build provenance
+
+Every release gets SLSA build provenance, signed through GitHub artifact
+attestations:
+
+- the files listed in GoReleaser's checksums file, such as archives and
+  binaries, are attested together from that file;
+- every image GoReleaser pushed is attested by digest, and the attestation is
+  also pushed to the registry next to the image.
+
+GoReleaser runs in a job that has no OIDC token, so the build cannot sign
+anything. Separate jobs receive the checksums and digests from it and sign the
+provenance. Because those jobs belong to this reusable workflow and not to the
+calling repository, the provenance names this workflow as the builder, which
+gives SLSA Build L3.
+
+A release with no `checksum` section in its GoReleaser configuration gets no
+provenance for its files. Images are attested only on `ghcr.io`.
+
+Verify a downloaded file or an image:
+
+```sh
+gh attestation verify conductor_Linux_x86_64.tar.gz \
+  --repo containdk/conductor \
+  --signer-workflow neticdk/shared-github-actions/.github/workflows/go-cd.yaml
+
+gh attestation verify oci://ghcr.io/containdk/conductor:v1.2.3 \
+  --repo containdk/conductor \
+  --signer-workflow neticdk/shared-github-actions/.github/workflows/go-cd.yaml
+```
+
+`--signer-workflow` is what checks the builder: it rejects provenance signed by
+any other workflow, including one in the project's own repository.
+
+The release job builds from a clean Go module cache, so nothing a previous run
+cached can reach a released artifact.
 
 ## Container CD
 
@@ -229,6 +274,7 @@ the default private module prefixes do not apply to your project.
 
 The CI example grants `contents: read`, `actions: read`, and
 `pull-requests: write` to allow the optional coverage report job. The release
-example grants `contents: write` for GitHub releases and `packages: write` for
-GHCR publishing. CD uses the automatic `GITHUB_TOKEN` for these operations;
+example grants `contents: write` for GitHub releases, `packages: write` for
+GHCR publishing, and `id-token: write` and `attestations: write` for signing
+the build provenance. Only the provenance jobs receive `id-token: write`. CD uses the automatic `GITHUB_TOKEN` for these operations;
 `gh_token` is used for private module access.
