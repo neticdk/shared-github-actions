@@ -30,6 +30,11 @@ on:
         required: false
         type: string
         default: github.com/containdk,github.com/neticdk,github.com/neticdk-k8s
+      run-tests:
+        description: "Run the tests job"
+        required: false
+        default: true
+        type: boolean
       run-benchmarks:
         description: "Run benchmarks"
         required: false
@@ -92,6 +97,7 @@ on:
 jobs:
   tests:
     name: Tests
+    if: inputs.run-tests
     env:
       GOPRIVATE: "${{ inputs.go-private }}"
       GOEXPERIMENT: jsonv2

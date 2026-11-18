@@ -63,6 +63,7 @@ All inputs are optional.
 | `go-version` | string | Unset | Go version override. Otherwise, setup reads `go.mod` in `workdir`. |
 | `go-private` | string | `github.com/containdk,github.com/neticdk,github.com/neticdk-k8s` | Value of `GOPRIVATE`. |
 | `workdir` | string | `.` | Project directory relative to the repository root. |
+| `run-tests` | boolean | `true` | Run the tests job. Set to `false` when the caller runs its own tests. Benchmarks, the release test, the coverage artifact and the coverage report all belong to that job and are skipped with it. |
 | `run-benchmarks` | boolean | `false` | Run Go benchmarks after tests. |
 | `run-release-test` | boolean | `false` | Validate GoReleaser configuration in `workdir`. |
 | `run-govulncheck` | boolean | `true` | Run govulncheck. |
